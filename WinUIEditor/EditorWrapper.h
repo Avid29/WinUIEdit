@@ -699,6 +699,11 @@ namespace winrt::WinUIEditor::implementation
 		void CharacterCategoryOptimization(int32_t value);
 
 		/**
+		 * Is an undo sequence active?
+		 */
+		int32_t UndoSequence();
+
+		/**
 		 * How many undo actions are in the history?
 		 */
 		int32_t UndoActions();
@@ -898,6 +903,16 @@ namespace winrt::WinUIEditor::implementation
 		void AutoCMaxHeight(int32_t value);
 
 		/**
+		 * Get the style number used for auto-completion and user lists fonts.
+		 */
+		int32_t AutoCStyle();
+
+		/**
+		 * Set the style number used for auto-completion and user lists fonts.
+		 */
+		void AutoCStyle(int32_t value);
+
+		/**
 		 * Retrieve indentation size.
 		 */
 		int32_t Indent();
@@ -1029,6 +1044,16 @@ namespace winrt::WinUIEditor::implementation
 		 * Enable or disable change history.
 		 */
 		void ChangeHistory(WinUIEditor::ChangeHistoryOption const &value);
+
+		/**
+		 * Report undo selection history status.
+		 */
+		WinUIEditor::UndoSelectionHistoryOption UndoSelectionHistory();
+
+		/**
+		 * Enable or disable undo selection history.
+		 */
+		void UndoSelectionHistory(WinUIEditor::UndoSelectionHistoryOption const &value);
 
 		/**
 		 * Retrieve the display line at the top of the display.
@@ -2896,9 +2921,20 @@ namespace winrt::WinUIEditor::implementation
 		void Tab();
 
 		/**
-		 * Dedent the selected lines.
+		 * Indent the current and selected lines.
+		 */
+		void LineIndent();
+
+		/**
+		 * If selection is empty or all on one line dedent the line if caret is at start, else move caret.
+		 * If more than one line selected, dedent the lines.
 		 */
 		void BackTab();
+
+		/**
+		 * Dedent the current and selected lines.
+		 */
+		void LineDedent();
 
 		/**
 		 * Insert a new line, may use a CRLF, CR or LF depending on EOL mode.
@@ -3460,6 +3496,11 @@ namespace winrt::WinUIEditor::implementation
 		void CopyAllowLine();
 
 		/**
+		 * Cut the selection, if selection empty cut the line with the caret
+		 */
+		void CutAllowLine();
+
+		/**
 		 * Which symbol was defined for markerNumber with MarkerDefine
 		 */
 		int32_t MarkerSymbolDefined(int32_t markerNumber);
@@ -3884,6 +3925,11 @@ namespace winrt::WinUIEditor::implementation
 		bool StyleGetCheckMonospaced(int32_t style);
 
 		/**
+		 * Get the stretch of characters of a style.
+		 */
+		WinUIEditor::FontStretch StyleGetStretch(int32_t style);
+
+		/**
 		 * Get the invisible representation for a style.
 		 */
 		int32_t StyleGetInvisibleRepresentationWriteBuffer(int32_t style, Windows::Storage::Streams::IBuffer const &representation);
@@ -3994,6 +4040,12 @@ namespace winrt::WinUIEditor::implementation
 		int64_t GetLineEndPosition(int64_t line);
 
 		/**
+		 * Retrieve serialized form of selection.
+		 */
+		int64_t GetSelectionSerializedWriteBuffer(Windows::Storage::Streams::IBuffer const &selectionString);
+		hstring GetSelectionSerialized();
+
+		/**
 		 * Retrieve the text in the target.
 		 */
 		int64_t GetTargetTextWriteBuffer(Windows::Storage::Streams::IBuffer const &text);
@@ -4065,6 +4117,12 @@ namespace winrt::WinUIEditor::implementation
 		 */
 		int32_t AutoCGetCurrentTextWriteBuffer(Windows::Storage::Streams::IBuffer const &text);
 		hstring AutoCGetCurrentText();
+
+		/**
+		 * Get the string to separate parts when copying a multiple selection.
+		 */
+		int32_t GetCopySeparatorWriteBuffer(Windows::Storage::Streams::IBuffer const &separator);
+		hstring GetCopySeparator();
 
 		/**
 		 * Return a read-only pointer to a range of characters in the document.
@@ -4407,6 +4465,11 @@ namespace winrt::WinUIEditor::implementation
 		void StyleSetCheckMonospaced(int32_t style, bool checkMonospaced);
 
 		/**
+		 * Set the stretch of characters of a style.
+		 */
+		void StyleSetStretch(int32_t style, WinUIEditor::FontStretch const &stretch);
+
+		/**
 		 * Set the invisible representation for a style.
 		 */
 		void StyleSetInvisibleRepresentationFromBuffer(int32_t style, Windows::Storage::Streams::IBuffer const &representation);
@@ -4489,6 +4552,12 @@ namespace winrt::WinUIEditor::implementation
 		void SetLineIndentation(int64_t line, int32_t indentation);
 
 		/**
+		 * Set selection from serialized form.
+		 */
+		void SetSelectionSerializedFromBuffer(Windows::Storage::Streams::IBuffer const &selectionString);
+		void SetSelectionSerialized(hstring const &selectionString);
+
+		/**
 		 * Enlarge the number of lines allocated.
 		 */
 		void AllocateLines(int64_t lines);
@@ -4563,6 +4632,12 @@ namespace winrt::WinUIEditor::implementation
 		 */
 		void SetPunctuationCharsFromBuffer(Windows::Storage::Streams::IBuffer const &characters);
 		void SetPunctuationChars(hstring const &characters);
+
+		/**
+		 * Set the string to separate parts when copying a multiple selection.
+		 */
+		void SetCopySeparatorFromBuffer(Windows::Storage::Streams::IBuffer const &separator);
+		void SetCopySeparator(hstring const &separator);
 
 		/**
 		 * Set the alpha fill colour of the given indicator.

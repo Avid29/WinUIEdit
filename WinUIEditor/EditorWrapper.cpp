@@ -1475,6 +1475,14 @@ namespace winrt::WinUIEditor::implementation
 	}
 
 	/**
+	 * Is an undo sequence active?
+	 */
+	int32_t Editor::UndoSequence()
+	{
+		return static_cast<int32_t>(_editor.get()->PublicWndProc(Scintilla::Message::GetUndoSequence, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0)));
+	}
+
+	/**
 	 * How many undo actions are in the history?
 	 */
 	int32_t Editor::UndoActions()
@@ -1788,6 +1796,22 @@ namespace winrt::WinUIEditor::implementation
 	}
 
 	/**
+	 * Get the style number used for auto-completion and user lists fonts.
+	 */
+	int32_t Editor::AutoCStyle()
+	{
+		return static_cast<int32_t>(_editor.get()->PublicWndProc(Scintilla::Message::AutoCGetStyle, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0)));
+	}
+
+	/**
+	 * Set the style number used for auto-completion and user lists fonts.
+	 */
+	void Editor::AutoCStyle(int32_t value)
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::AutoCSetStyle, static_cast<Scintilla::uptr_t>(value), static_cast<Scintilla::sptr_t>(0));
+	}
+
+	/**
 	 * Retrieve indentation size.
 	 */
 	int32_t Editor::Indent()
@@ -1996,6 +2020,22 @@ namespace winrt::WinUIEditor::implementation
 	void Editor::ChangeHistory(WinUIEditor::ChangeHistoryOption const &value)
 	{
 		_editor.get()->PublicWndProc(Scintilla::Message::SetChangeHistory, static_cast<Scintilla::uptr_t>(value), static_cast<Scintilla::sptr_t>(0));
+	}
+
+	/**
+	 * Report undo selection history status.
+	 */
+	WinUIEditor::UndoSelectionHistoryOption Editor::UndoSelectionHistory()
+	{
+		return static_cast<WinUIEditor::UndoSelectionHistoryOption>(_editor.get()->PublicWndProc(Scintilla::Message::GetUndoSelectionHistory, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0)));
+	}
+
+	/**
+	 * Enable or disable undo selection history.
+	 */
+	void Editor::UndoSelectionHistory(WinUIEditor::UndoSelectionHistoryOption const &value)
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::SetUndoSelectionHistory, static_cast<Scintilla::uptr_t>(value), static_cast<Scintilla::sptr_t>(0));
 	}
 
 	/**
@@ -5099,11 +5139,28 @@ namespace winrt::WinUIEditor::implementation
 	}
 
 	/**
-	 * Dedent the selected lines.
+	 * Indent the current and selected lines.
+	 */
+	void Editor::LineIndent()
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::LineIndent, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0));
+	}
+
+	/**
+	 * If selection is empty or all on one line dedent the line if caret is at start, else move caret.
+	 * If more than one line selected, dedent the lines.
 	 */
 	void Editor::BackTab()
 	{
 		_editor.get()->PublicWndProc(Scintilla::Message::BackTab, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0));
+	}
+
+	/**
+	 * Dedent the current and selected lines.
+	 */
+	void Editor::LineDedent()
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::LineDedent, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0));
 	}
 
 	/**
@@ -6023,6 +6080,14 @@ namespace winrt::WinUIEditor::implementation
 	}
 
 	/**
+	 * Cut the selection, if selection empty cut the line with the caret
+	 */
+	void Editor::CutAllowLine()
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::CutAllowLine, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0));
+	}
+
+	/**
 	 * Which symbol was defined for markerNumber with MarkerDefine
 	 */
 	int32_t Editor::MarkerSymbolDefined(int32_t markerNumber)
@@ -6817,6 +6882,14 @@ namespace winrt::WinUIEditor::implementation
 	}
 
 	/**
+	 * Get the stretch of characters of a style.
+	 */
+	WinUIEditor::FontStretch Editor::StyleGetStretch(int32_t style)
+	{
+		return static_cast<WinUIEditor::FontStretch>(_editor.get()->PublicWndProc(Scintilla::Message::StyleGetStretch, static_cast<Scintilla::uptr_t>(style), static_cast<Scintilla::sptr_t>(0)));
+	}
+
+	/**
 	 * Get the invisible representation for a style.
 	 */
 	int32_t Editor::StyleGetInvisibleRepresentationWriteBuffer(int32_t style, Windows::Storage::Streams::IBuffer const &representation)
@@ -7034,6 +7107,29 @@ namespace winrt::WinUIEditor::implementation
 	}
 
 	/**
+	 * Retrieve serialized form of selection.
+	 */
+	int64_t Editor::GetSelectionSerializedWriteBuffer(Windows::Storage::Streams::IBuffer const &selectionString)
+	{
+		return static_cast<int64_t>(_editor.get()->PublicWndProc(Scintilla::Message::GetSelectionSerialized, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(selectionString ? selectionString.data() : nullptr)));
+	}
+
+	hstring Editor::GetSelectionSerialized()
+	{
+		const auto len{ static_cast<size_t>(_editor.get()->PublicWndProc(Scintilla::Message::GetSelectionSerialized, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0))) };
+		if (len)
+		{
+			std::string value(len, '\0');
+			_editor.get()->PublicWndProc(Scintilla::Message::GetSelectionSerialized, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(value.data()));
+			return to_hstring(value);
+		}
+		else
+		{
+			return hstring{};
+		}
+	}
+
+	/**
 	 * Retrieve the text in the target.
 	 */
 	int64_t Editor::GetTargetTextWriteBuffer(Windows::Storage::Streams::IBuffer const &text)
@@ -7208,6 +7304,29 @@ namespace winrt::WinUIEditor::implementation
 		{
 			std::string value(len, '\0');
 			_editor.get()->PublicWndProc(Scintilla::Message::AutoCGetCurrentText, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(value.data()));
+			return to_hstring(value);
+		}
+		else
+		{
+			return hstring{};
+		}
+	}
+
+	/**
+	 * Get the string to separate parts when copying a multiple selection.
+	 */
+	int32_t Editor::GetCopySeparatorWriteBuffer(Windows::Storage::Streams::IBuffer const &separator)
+	{
+		return static_cast<int32_t>(_editor.get()->PublicWndProc(Scintilla::Message::GetCopySeparator, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(separator ? separator.data() : nullptr)));
+	}
+
+	hstring Editor::GetCopySeparator()
+	{
+		const auto len{ static_cast<size_t>(_editor.get()->PublicWndProc(Scintilla::Message::GetCopySeparator, static_cast<Scintilla::uptr_t>(0), static_cast<Scintilla::sptr_t>(0))) };
+		if (len)
+		{
+			std::string value(len, '\0');
+			_editor.get()->PublicWndProc(Scintilla::Message::GetCopySeparator, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(value.data()));
 			return to_hstring(value);
 		}
 		else
@@ -7914,6 +8033,14 @@ namespace winrt::WinUIEditor::implementation
 	}
 
 	/**
+	 * Set the stretch of characters of a style.
+	 */
+	void Editor::StyleSetStretch(int32_t style, WinUIEditor::FontStretch const &stretch)
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::StyleSetStretch, static_cast<Scintilla::uptr_t>(style), static_cast<Scintilla::sptr_t>(stretch));
+	}
+
+	/**
 	 * Set the invisible representation for a style.
 	 */
 	void Editor::StyleSetInvisibleRepresentationFromBuffer(int32_t style, Windows::Storage::Streams::IBuffer const &representation)
@@ -8053,6 +8180,19 @@ namespace winrt::WinUIEditor::implementation
 	}
 
 	/**
+	 * Set selection from serialized form.
+	 */
+	void Editor::SetSelectionSerializedFromBuffer(Windows::Storage::Streams::IBuffer const &selectionString)
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::SetSelectionSerialized, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(selectionString ? selectionString.data() : nullptr));
+	}
+
+	void Editor::SetSelectionSerialized(hstring const &selectionString)
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::SetSelectionSerialized, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(to_string(selectionString).c_str()));
+	}
+
+	/**
 	 * Enlarge the number of lines allocated.
 	 */
 	void Editor::AllocateLines(int64_t lines)
@@ -8176,6 +8316,19 @@ namespace winrt::WinUIEditor::implementation
 	void Editor::SetPunctuationChars(hstring const &characters)
 	{
 		_editor.get()->PublicWndProc(Scintilla::Message::SetPunctuationChars, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(to_string(characters).c_str()));
+	}
+
+	/**
+	 * Set the string to separate parts when copying a multiple selection.
+	 */
+	void Editor::SetCopySeparatorFromBuffer(Windows::Storage::Streams::IBuffer const &separator)
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::SetCopySeparator, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(separator ? separator.data() : nullptr));
+	}
+
+	void Editor::SetCopySeparator(hstring const &separator)
+	{
+		_editor.get()->PublicWndProc(Scintilla::Message::SetCopySeparator, static_cast<Scintilla::uptr_t>(0), reinterpret_cast<Scintilla::sptr_t>(to_string(separator).c_str()));
 	}
 
 	/**

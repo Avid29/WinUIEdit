@@ -203,7 +203,7 @@ int GetPyStringState(Accessor &styler, Sci_Position i, Sci_PositionU *nextIndex,
 	}
 }
 
-bool IsAWordChar(int ch, bool unicodeIdentifiers) {
+bool IsAWordChar(int ch, bool unicodeIdentifiers) noexcept {
 	if (IsASCII(ch))
 		return (IsAlphaNumeric(ch) || ch == '.' || ch == '_');
 
@@ -214,7 +214,7 @@ bool IsAWordChar(int ch, bool unicodeIdentifiers) {
 	return IsXidContinue(ch);
 }
 
-bool IsAWordStart(int ch, bool unicodeIdentifiers) {
+bool IsAWordStart(int ch, bool unicodeIdentifiers) noexcept {
 	if (IsASCII(ch))
 		return (IsUpperOrLowerCase(ch) || ch == '_');
 
@@ -403,14 +403,12 @@ class LexerPython : public DefaultLexer {
 	OptionsPython options;
 	OptionSetPython osPython;
 	enum { ssIdentifier };
-	SubStyles subStyles;
+	SubStyles subStyles{styleSubable};
 	std::map<Sci_Position, std::vector<SingleFStringExpState> > ftripleStateAtEol;
 public:
 	explicit LexerPython() :
-		DefaultLexer("python", SCLEX_PYTHON, lexicalClasses, std::size(lexicalClasses)),
-		subStyles(styleSubable, 0x80, 0x40, 0) {
+		DefaultLexer("python", SCLEX_PYTHON, lexicalClasses, std::size(lexicalClasses)) {
 	}
-	~LexerPython() override = default;
 	void SCI_METHOD Release() override {
 		delete this;
 	}
@@ -427,7 +425,7 @@ public:
 		return osPython.DescribeProperty(name);
 	}
 	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val) override;
-	const char * SCI_METHOD PropertyGet(const char *key) override {
+	const char *SCI_METHOD PropertyGet(const char *key) override {
 		return osPython.PropertyGet(key);
 	}
 	const char *SCI_METHOD DescribeWordListSets() override {
@@ -535,11 +533,7 @@ void LexerPython::ProcessLineEnd(StyleContext &sc, std::vector<SingleFStringExpS
 	}
 
 	if (!fstringStateStack.empty()) {
-		std::pair<Sci_Position, std::vector<SingleFStringExpState> > val;
-		val.first = sc.currentLine;
-		val.second = fstringStateStack;
-
-		ftripleStateAtEol.insert(val);
+		ftripleStateAtEol.insert({sc.currentLine, fstringStateStack});
 	}
 
 	if ((sc.state == SCE_P_DEFAULT)
@@ -715,9 +709,9 @@ void SCI_METHOD LexerPython::Lex(Sci_PositionU startPos, Sci_Position length, in
 							pos--;
 							ch = styler.SafeGetCharAt(pos, '\0');
 						}
-						if (pos < 0 || ch == '.') {
+						if (ch == '.') {
 							// Is this an attribute we could style? if it is, do as asked
-							bool isComment = false;
+							bool isComment = AnyOf(styler.BufferStyleAt(pos), SCE_P_COMMENTLINE, SCE_P_COMMENTBLOCK);
 							bool isDecoratorAttribute = false;
 							const Sci_Position attrLine = styler.GetLine(pos);
 							for (Sci_Position i = styler.LineStart(attrLine); i < pos; i++) {
@@ -727,14 +721,14 @@ void SCI_METHOD LexerPython::Lex(Sci_PositionU startPos, Sci_Position length, in
 								if (attrCh == '#')
 									isComment = true;
 								// Detect if this attribute belongs to a decorator
-								if (!IsASpaceOrTab(ch))
+								if (!IsASpaceOrTab(attrCh))
 									break;
 							}
-							if (((isDecoratorAttribute) && (!isComment)) && (((options.decoratorAttributes == 1)  && (style == SCE_P_IDENTIFIER)) || (options.decoratorAttributes == 2))){
+							if (((isDecoratorAttribute) && (!isComment)) && (((options.decoratorAttributes == 1)  && (style == SCE_P_IDENTIFIER)) || (options.decoratorAttributes == 2))) {
 								// Style decorator attributes as decorators but respect already styled identifiers (unless requested to ignore already styled identifiers)
 								style = SCE_P_DECORATOR;
 							}
-							if (((!isDecoratorAttribute) && (!isComment)) && (((options.identifierAttributes == 1) && (style == SCE_P_IDENTIFIER)) || (options.identifierAttributes == 2))){
+							if (((!isDecoratorAttribute) && (!isComment)) && (((options.identifierAttributes == 1) && (style == SCE_P_IDENTIFIER)) || (options.identifierAttributes == 2))) {
 								// Style attributes and ignore decorator attributes but respect already styled identifiers (unless requested to ignore already styled identifiers)
 								style = SCE_P_ATTRIBUTE;
 							}
@@ -818,7 +812,7 @@ void SCI_METHOD LexerPython::Lex(Sci_PositionU startPos, Sci_Position length, in
 		}
 
 		// If in an f-string expression and pre pep 701 lexing is used,
-		// check for the ending quote(s) and end f-string to handle 
+		// check for the ending quote(s) and end f-string to handle
 		// syntactically incorrect cases like f'{' and f"""{""". Post
 		// pep 701, a quote may appear in a { } field so cases like
 		// f"n = {":".join(seq)}" is valid
@@ -1087,5 +1081,5 @@ void SCI_METHOD LexerPython::Fold(Sci_PositionU startPos, Sci_Position length, i
 
 }
 
-LexerModule lmPython(SCLEX_PYTHON, LexerPython::LexerFactoryPython, "python",
+extern const LexerModule lmPython(SCLEX_PYTHON, LexerPython::LexerFactoryPython, "python",
 		     pythonWordListDesc);

@@ -538,10 +538,7 @@ Sci_Position SCI_METHOD LexerPerl::WordListSet(int n, const char *wl) {
 	}
 	Sci_Position firstModification = -1;
 	if (wordListN) {
-		WordList wlNew;
-		wlNew.Set(wl);
-		if (*wordListN != wlNew) {
-			wordListN->Set(wl);
+		if (wordListN->Set(wl)) {
 			firstModification = 0;
 		}
 	}
@@ -1745,7 +1742,7 @@ void SCI_METHOD LexerPerl::Fold(Sci_PositionU startPos, Sci_Position length, int
 
 	int levelPrev = SC_FOLDLEVELBASE;
 	if (lineCurrent > 0)
-		levelPrev = styler.LevelAt(lineCurrent - 1) >> 16;
+		levelPrev = FoldLevelStart(styler.LevelAt(lineCurrent - 1));
 	int levelCurrent = levelPrev;
 	char chNext = styler[startPos];
 	char chPrev = styler.SafeGetCharAt(startPos - 1);
@@ -1878,14 +1875,9 @@ void SCI_METHOD LexerPerl::Fold(Sci_PositionU startPos, Sci_Position length, int
 				levelCurrent = SC_FOLDLEVELBASE + 1;
 				isPackageLine = false;
 			}
-			lev |= levelCurrent << 16;
-			if (visibleChars == 0 && options.foldCompact)
-				lev |= SC_FOLDLEVELWHITEFLAG;
-			if ((levelCurrent > levelPrev) && (visibleChars > 0))
-				lev |= SC_FOLDLEVELHEADERFLAG;
-			if (lev != styler.LevelAt(lineCurrent)) {
-				styler.SetLevel(lineCurrent, lev);
-			}
+			lev |= levelCurrent << FoldLevelShift;
+			lev |= FoldLevelFlags(levelPrev, levelCurrent, visibleChars == 0 && options.foldCompact, visibleChars > 0);
+			styler.SetLevelIfDifferent(lineCurrent, lev);
 			lineCurrent++;
 			levelPrev = levelCurrent;
 			visibleChars = 0;
@@ -1895,10 +1887,10 @@ void SCI_METHOD LexerPerl::Fold(Sci_PositionU startPos, Sci_Position length, int
 		chPrev = ch;
 	}
 	// Fill in the real level of the next line, keeping the current flags as they will be filled in later
-	int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
+	const int flagsNext = styler.LevelAt(lineCurrent) & ~SC_FOLDLEVELNUMBERMASK;
 	styler.SetLevel(lineCurrent, levelPrev | flagsNext);
 }
 
 }
 
-LexerModule lmPerl(SCLEX_PERL, LexerPerl::LexerFactoryPerl, "perl", perlWordListDesc);
+extern const LexerModule lmPerl(SCLEX_PERL, LexerPerl::LexerFactoryPerl, "perl", perlWordListDesc);
