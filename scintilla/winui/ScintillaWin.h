@@ -63,6 +63,11 @@ namespace Scintilla::Internal {
 
 	public:
 		ScintillaWinUI(std::shared_ptr<WinUIEditor::MainWrapper> const &wrapper);
+		// Deleted so ScintillaWinUI objects can not be copied.
+		ScintillaWinUI(const ScintillaWinUI &) = delete;
+		ScintillaWinUI(ScintillaWinUI &&) = delete;
+		ScintillaWinUI &operator=(const ScintillaWinUI &) = delete;
+		ScintillaWinUI &operator=(ScintillaWinUI &&) = delete;
 		void DpiChanged();
 		void SizeChanged();
 		void FocusChanged(bool focused);
@@ -83,7 +88,7 @@ namespace Scintilla::Internal {
 		void HandleCallTipPointerMove(winrt::Windows::Foundation::Point const &point);
 
 		sptr_t GetTextLength();
-		sptr_t GetText(uptr_t bufferSize, sptr_t buffer);
+		sptr_t GetText(uptr_t wParam, sptr_t lParam);
 		bool SetText(std::wstring_view const &text);
 
 		void StyleSetForeTransparent(int style, ColourRGBA color);
@@ -152,12 +157,6 @@ namespace Scintilla::Internal {
 		int _lastHorizontalScrollDelta{ 0 };
 		MouseWheelDelta verticalWheelDelta{};
 		MouseWheelDelta horizontalWheelDelta{};
-
-		// Deleted so ScintillaWinUI objects can not be copied.
-		ScintillaWinUI(const ScintillaWinUI &) = delete;
-		ScintillaWinUI(ScintillaWinUI &&) = delete;
-		ScintillaWinUI &operator=(const ScintillaWinUI &) = delete;
-		ScintillaWinUI &operator=(ScintillaWinUI &&) = delete;
 
 		winrt::Windows::UI::Text::Core::CoreTextEditContext _editContext{ nullptr };
 		winrt::Windows::UI::Text::Core::CoreTextEditContext::TextRequested_revoker _textRequestedRevoker{};
@@ -245,8 +244,6 @@ namespace Scintilla::Internal {
 		winrt::DUX::DispatcherTimer::Tick_revoker _dwellTickRevoker{};
 		winrt::DUX::DispatcherTimer GetTimerForReason(TickReason reason);
 
-		void UpdateCallTipOffset();
-
 		virtual bool FineTickerRunning(TickReason reason) override;
 		virtual void FineTickerStart(TickReason reason, int millis, int tolerance) override;
 		virtual void FineTickerCancel(TickReason reason) override;
@@ -254,10 +251,12 @@ namespace Scintilla::Internal {
 		virtual void SetVerticalScrollPos() override;
 		virtual void SetHorizontalScrollPos() override;
 		void HorizontalScrollToClamped(int xPos);
-		HorizontalScrollRange GetHorizontalScrollRange() const;
+		[[nodiscard]] HorizontalScrollRange GetHorizontalScrollRange() const;
 		virtual bool ModifyScrollBars(Sci::Line nMax, Sci::Line nPage) override;
 		bool ChangeScrollRange(int nBar, int nMin, int nMax, UINT nPage) noexcept;
 		void ChangeScrollPos(int barType, Sci::Position pos);
+		virtual std::unique_ptr<CaseFolder> CaseFolderForEncoding() override;
+		virtual std::string CaseMapString(const std::string &s, CaseMapping caseMapping) override;
 		virtual void Copy() override;
 		virtual void Paste() override;
 		winrt::fire_and_forget PasteAsync();
@@ -268,14 +267,15 @@ namespace Scintilla::Internal {
 		virtual void CopyToClipboard(const SelectionText &selectedText) override;
 		virtual void SetMouseCapture(bool on) override;
 		virtual bool HaveMouseCapture() override;
-		virtual std::string UTF8FromEncoded(std::string_view encoded) const override;
-		virtual std::string EncodedFromUTF8(std::string_view utf8) const override;
+		[[nodiscard]] virtual bool ValidCodePage(int codePage) const override;
+		[[nodiscard]] virtual std::string UTF8FromEncoded(std::string_view encoded) const override;
+		[[nodiscard]] virtual std::string EncodedFromUTF8(std::string_view utf8) const override;
 		virtual Scintilla::sptr_t DefWndProc(Scintilla::Message iMessage, Scintilla::uptr_t wParam, Scintilla::sptr_t lParam) override;
 		virtual void CreateCallTipWindow(PRectangle rc) override;
 		virtual void AddToPopUp(const char *label, int cmd = 0, bool enabled = true) override;
 		IFACEMETHOD(UpdatesNeeded)() override;
 		void DrawBit(RECT const &drawingBounds);
-		UINT CodePageOfDocument() const noexcept;
+		[[nodiscard]] UINT CodePageOfDocument() const noexcept;
 		winrt::Windows::ApplicationModel::DataTransfer::DataPackageOperation EffectFromState(winrt::Windows::ApplicationModel::DataTransfer::DataPackageOperation const &allowedOperations, winrt::Windows::ApplicationModel::DataTransfer::DragDrop::DragDropModifiers const &grfKeyState) const noexcept;
 		void StartDrag() override;
 		winrt::fire_and_forget DoDragAsync();
