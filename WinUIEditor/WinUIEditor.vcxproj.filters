@@ -37,6 +37,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="TextRangeProvider.cpp" />
     <ClCompile Include="Wrapper.cpp" />
+    <ClCompile Include="..\scintilla\winui\ListBox.cxx" />
     <ClCompile Include="..\scintilla\winui\PlatWin.cxx" />
     <ClCompile Include="..\scintilla\winui\ScintillaWin.cxx" />
     <ClCompile Include="..\scintilla\winui\SurfaceD2D.cxx" />
@@ -570,6 +571,7 @@
     <ClInclude Include="TextMateScope.h" />
     <ClInclude Include="TextRangeProvider.h" />
     <ClInclude Include="Wrapper.h" />
+    <ClInclude Include="..\scintilla\winui\ListBox.h" />
     <ClInclude Include="..\scintilla\winui\PlatWin.h" />
     <ClInclude Include="..\scintilla\winui\ScintillaWin.h" />
     <ClInclude Include="..\scintilla\winui\SurfaceD2D.h" />

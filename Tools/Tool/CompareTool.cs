@@ -23,6 +23,8 @@ namespace Tool
             {
                 "HanjaDic.cxx",
                 "HanjaDic.h",
+                "ListBox.cxx",
+                "ListBox.h",
                 "PlatWin.cxx",
                 "PlatWin.h",
                 "ScintillaDLL.cxx",
