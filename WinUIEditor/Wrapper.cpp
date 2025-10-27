@@ -120,7 +120,7 @@ namespace WinUIEditor
 
 		// Create the Direct2D device and a corresponding context
 		winrt::com_ptr<ID2D1Device> d2dDevice;
-		D2D1CreateDevice(_dxgiDevice.get(), nullptr, d2dDevice.put());
+		Scintilla::Internal::pD2DFactory->CreateDevice(_dxgiDevice.get(), d2dDevice.put());
 
 		winrt::check_hresult(
 			d2dDevice->CreateDeviceContext(

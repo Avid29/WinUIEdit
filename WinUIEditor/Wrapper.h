@@ -3,6 +3,7 @@
 namespace Scintilla::Internal
 {
 	class ScintillaWinUI;
+	extern ID2D1Factory1 *pD2DFactory;
 }
 
 namespace WinUIEditor
